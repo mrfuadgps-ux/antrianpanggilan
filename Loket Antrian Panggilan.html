@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Antrian Rumah Sakit</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+      50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.8); }
+    }
+    
+    @keyframes slide-in {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .active-queue {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+    
+    .queue-card {
+      animation: slide-in 0.3s ease-out;
+    }
+    
+    .loket-btn:active {
+      transform: scale(0.95);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white overflow-auto">
+  <div id="app-wrapper" class="w-full h-full min-h-full p-4 md:p-6"><!-- Header -->
+   <header class="text-center mb-6">
+    <div class="inline-flex items-center gap-3 mb-2">
+     <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+     </svg>
+     <h1 id="hospital-name" class="text-2xl md:text-3xl font-bold text-white">Pelita Global Mandiri School</h1>
+    </div>
+    <p id="welcome-text" class="text-blue-300 text-sm md:text-base">Tim IT PGM</p>
+   </header><!-- Main Display -->
+   <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6"><!-- Current Queue Display -->
+    <div class="lg:col-span-2 bg-gradient-to-br from-blue-800/50 to-blue-900/50 rounded-2xl p-6 border border-blue-500/30 backdrop-blur">
+     <h2 class="text-center text-blue-300 text-lg mb-4 font-medium">NOMOR ANTRIAN SAAT INI</h2>
+     <div id="current-queue-display" class="active-queue bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl p-8 text-center mb-6">
+      <div class="text-7xl md:text-9xl font-extrabold text-white mb-2" id="current-number">
+       -
+      </div>
+      <div class="text-xl md:text-2xl text-blue-100" id="current-loket">
+       Menunggu panggilan...
+      </div>
+     </div><!-- Recent Queue History -->
+     <div class="bg-slate-800/50 rounded-xl p-4">
+      <h3 class="text-blue-300 text-sm mb-3 font-medium">📋 Riwayat Panggilan Terakhir</h3>
+      <div id="queue-history" class="space-y-2 max-h-40 overflow-y-auto">
+       <p class="text-slate-400 text-center text-sm py-4">Belum ada antrian dipanggil</p>
+      </div>
+     </div>
+    </div><!-- Control Panel -->
+    <div class="bg-gradient-to-br from-slate-800/50 to-slate-900/50 rounded-2xl p-4 md:p-6 border border-slate-600/30 backdrop-blur">
+     <h2 class="text-center text-slate-300 text-lg mb-4 font-medium">PANEL KONTROL</h2><!-- Next Queue Number -->
+     <div class="bg-slate-700/50 rounded-xl p-4 mb-4 text-center">
+      <p class="text-slate-400 text-xs mb-1">Nomor Antrian Berikutnya</p>
+      <div class="text-4xl font-bold text-emerald-400" id="next-queue-number">
+       1
+      </div>
+     </div><!-- Loket Selection -->
+     <div class="mb-4">
+      <p class="text-slate-400 text-xs mb-2 text-center">Pilih Loket Tujuan</p>
+      <div class="grid grid-cols-5 gap-2" id="loket-buttons"><button class="loket-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="1">1</button> <button class="loket-btn bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="2">2</button> <button class="loket-btn bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="3">3</button> <button class="loket-btn bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="4">4</button> <button class="loket-btn bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="5">5</button> <button class="loket-btn bg-orange-600 hover:bg-orange-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="6">6</button> <button class="loket-btn bg-pink-600 hover:bg-pink-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="7">7</button> <button class="loket-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="8">8</button> <button class="loket-btn bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="9">9</button> <button class="loket-btn bg-lime-600 hover:bg-lime-500 text-white font-bold py-2.5 rounded-lg transition-all text-sm" data-loket="10">10</button>
+      </div>
+     </div><!-- Call Button --> <button id="call-btn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-bold py-4 rounded-xl text-lg transition-all shadow-lg hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed mb-4"> 🔊 PANGGIL NOMOR BERIKUT </button> <!-- Selected Loket Display -->
+     <div class="bg-blue-900/30 rounded-xl p-3 text-center border border-blue-500/20">
+      <p class="text-blue-300 text-xs">Loket Dipilih:</p>
+      <p class="text-2xl font-bold text-blue-400" id="selected-loket">1</p>
+     </div><!-- Manual Call Section -->
+     <div class="mt-4 bg-slate-700/30 rounded-xl p-3 border border-slate-600/20">
+      <p class="text-slate-300 text-xs mb-2 text-center">Panggil Nomor Tertentu</p>
+      <div class="flex gap-2"><input type="number" id="manual-number" min="1" placeholder="No." class="flex-1 bg-slate-800 text-white px-3 py-2 rounded-lg text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"> <button id="manual-call-btn" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"> 📞 </button>
+      </div>
+     </div><!-- Reset Button --> <button id="reset-btn" class="w-full mt-4 bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium py-2 rounded-lg text-sm transition-all"> 🔄 Reset Antrian </button>
+    </div>
+   </div><!-- Stats Footer -->
+   <div class="max-w-6xl mx-auto mt-6 grid grid-cols-3 gap-4">
+    <div class="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-600/30">
+     <p class="text-slate-400 text-xs">Total Dipanggil</p>
+     <p class="text-2xl font-bold text-emerald-400" id="total-called">0</p>
+    </div>
+    <div class="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-600/30">
+     <p class="text-slate-400 text-xs">Loket Aktif</p>
+     <p class="text-2xl font-bold text-blue-400">10</p>
+    </div>
+    <div class="bg-slate-800/50 rounded-xl p-4 text-center border border-slate-600/30">
+     <p class="text-slate-400 text-xs">Waktu</p>
+     <p class="text-lg font-bold text-amber-400" id="current-time">--:--</p>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      hospital_name: 'Pelita Global Mandiri School',
+      welcome_text: 'Tim IT PGM',
+      primary_color: '#1e40af',
+      secondary_color: '#1e293b',
+      text_color: '#ffffff',
+      accent_color: '#3b82f6',
+      surface_color: '#334155'
+    };
+
+    let config = { ...defaultConfig };
+    let queueData = [];
+    let selectedLoket = 1;
+    let nextQueueNumber = 1;
+    let isProcessing = false;
+
+    // Speech synthesis for announcements
+    function speakAnnouncement(queueNumber, loketNumber) {
+      if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        const text = `Nomor antrian ${queueNumber}, silakan menuju ke loket ${loketNumber}`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        
+        // Try to find Indonesian voice
+        const voices = window.speechSynthesis.getVoices();
+        const indonesianVoice = voices.find(voice => voice.lang.includes('id'));
+        if (indonesianVoice) {
+          utterance.voice = indonesianVoice;
+        }
+        
+        window.speechSynthesis.speak(utterance);
+        
+        // Repeat announcement after 3 seconds
+        setTimeout(() => {
+          if ('speechSynthesis' in window) {
+            const repeatUtterance = new SpeechSynthesisUtterance(text);
+            repeatUtterance.lang = 'id-ID';
+            repeatUtterance.rate = 0.9;
+            if (indonesianVoice) {
+              repeatUtterance.voice = indonesianVoice;
+            }
+            window.speechSynthesis.speak(repeatUtterance);
+          }
+        }, 3000);
+      }
+    }
+
+    // Load voices when available
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    // Update time display
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('current-time').textContent = timeStr;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Update UI based on queue data
+    function updateDisplay() {
+      const calledQueues = queueData.filter(q => q.status === 'called').sort((a, b) => 
+        new Date(b.called_at) - new Date(a.called_at)
+      );
+      
+      // Update current queue display
+      const currentNumberEl = document.getElementById('current-number');
+      const currentLoketEl = document.getElementById('current-loket');
+      
+      if (calledQueues.length > 0) {
+        const latest = calledQueues[0];
+        currentNumberEl.textContent = String(latest.queue_number).padStart(3, '0');
+        currentLoketEl.textContent = `Silakan ke Loket ${latest.loket}`;
+      } else {
+        currentNumberEl.textContent = '-';
+        currentLoketEl.textContent = 'Menunggu panggilan...';
+      }
+
+      // Update queue history
+      const historyContainer = document.getElementById('queue-history');
+      if (calledQueues.length > 0) {
+        historyContainer.innerHTML = calledQueues.slice(0, 5).map(q => `
+          <div class="queue-card flex justify-between items-center bg-slate-700/50 rounded-lg px-4 py-2">
+            <span class="font-bold text-white">No. ${String(q.queue_number).padStart(3, '0')}</span>
+            <span class="text-blue-300">Loket ${q.loket}</span>
+            <span class="text-slate-400 text-xs">${new Date(q.called_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        `).join('');
+      } else {
+        historyContainer.innerHTML = '<p class="text-slate-400 text-center text-sm py-4">Belum ada antrian dipanggil</p>';
+      }
+
+      // Update total called
+      document.getElementById('total-called').textContent = calledQueues.length;
+
+      // Update next queue number
+      const maxNumber = queueData.length > 0 ? Math.max(...queueData.map(q => q.queue_number)) : 0;
+      nextQueueNumber = maxNumber + 1;
+      document.getElementById('next-queue-number').textContent = nextQueueNumber;
+    }
+
+    // Data SDK handler
+    const dataHandler = {
+      onDataChanged(data) {
+        queueData = data;
+        updateDisplay();
+      }
+    };
+
+    // Call next queue
+    async function callNextQueue() {
+      if (isProcessing) return;
+      
+      if (queueData.length >= 999) {
+        showInlineMessage('Batas maksimum antrian tercapai. Silakan reset antrian.');
+        return;
+      }
+
+      isProcessing = true;
+      const callBtn = document.getElementById('call-btn');
+      callBtn.disabled = true;
+      callBtn.innerHTML = '⏳ Memanggil...';
+
+      const newQueue = {
+        queue_number: nextQueueNumber,
+        loket: selectedLoket,
+        status: 'called',
+        called_at: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(newQueue);
+      
+      if (result.isOk) {
+        // Speak the announcement
+        speakAnnouncement(nextQueueNumber, selectedLoket);
+      } else {
+        showInlineMessage('Gagal memanggil nomor antrian. Silakan coba lagi.');
+      }
+
+      isProcessing = false;
+      callBtn.disabled = false;
+      callBtn.innerHTML = '🔊 PANGGIL NOMOR BERIKUT';
+    }
+
+    // Call manual queue number
+    async function callManualQueue() {
+      if (isProcessing) return;
+      
+      const manualInput = document.getElementById('manual-number');
+      const manualNumber = parseInt(manualInput.value);
+      
+      if (!manualNumber || manualNumber < 1) {
+        showInlineMessage('Masukkan nomor antrian yang valid (minimal 1).');
+        return;
+      }
+
+      if (queueData.length >= 999) {
+        showInlineMessage('Batas maksimum antrian tercapai. Silakan reset antrian.');
+        return;
+      }
+
+      isProcessing = true;
+      const manualBtn = document.getElementById('manual-call-btn');
+      manualBtn.disabled = true;
+      manualBtn.innerHTML = '⏳';
+
+      const newQueue = {
+        queue_number: manualNumber,
+        loket: selectedLoket,
+        status: 'called',
+        called_at: new Date().toISOString()
+      };
+
+      const result = await window.dataSdk.create(newQueue);
+      
+      if (result.isOk) {
+        // Speak the announcement
+        speakAnnouncement(manualNumber, selectedLoket);
+        manualInput.value = '';
+      } else {
+        showInlineMessage('Gagal memanggil nomor antrian. Silakan coba lagi.');
+      }
+
+      isProcessing = false;
+      manualBtn.disabled = false;
+      manualBtn.innerHTML = '📞';
+    }
+
+    // Reset queue
+    async function resetQueue() {
+      if (queueData.length === 0) return;
+      
+      const resetBtn = document.getElementById('reset-btn');
+      
+      if (resetBtn.dataset.confirming === 'true') {
+        resetBtn.disabled = true;
+        resetBtn.innerHTML = '⏳ Menghapus...';
+        
+        // Delete all queue data
+        for (const item of queueData) {
+          await window.dataSdk.delete(item);
+        }
+        
+        resetBtn.disabled = false;
+        resetBtn.innerHTML = '🔄 Reset Antrian';
+        resetBtn.dataset.confirming = 'false';
+        resetBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+        resetBtn.classList.add('bg-slate-700', 'hover:bg-slate-600');
+      } else {
+        resetBtn.dataset.confirming = 'true';
+        resetBtn.innerHTML = '⚠    Klik lagi untuk konfirmasi';
+        resetBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+        resetBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+        
+        setTimeout(() => {
+          if (resetBtn.dataset.confirming === 'true') {
+            resetBtn.dataset.confirming = 'false';
+            resetBtn.innerHTML = '🔄 Reset Antrian';
+            resetBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+            resetBtn.classList.add('bg-slate-700', 'hover:bg-slate-600');
+          }
+        }, 3000);
+      }
+    }
+
+    // Show inline message
+    function showInlineMessage(message) {
+      const existingMsg = document.querySelector('.inline-message');
+      if (existingMsg) existingMsg.remove();
+      
+      const msgEl = document.createElement('div');
+      msgEl.className = 'inline-message fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+      msgEl.textContent = message;
+      document.body.appendChild(msgEl);
+      
+      setTimeout(() => msgEl.remove(), 3000);
+    }
+
+    // Select loket
+    function selectLoket(loket) {
+      selectedLoket = loket;
+      document.getElementById('selected-loket').textContent = loket;
+      
+      // Update button styles
+      document.querySelectorAll('.loket-btn').forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-white', 'ring-offset-2', 'ring-offset-slate-800');
+        if (parseInt(btn.dataset.loket) === loket) {
+          btn.classList.add('ring-2', 'ring-white', 'ring-offset-2', 'ring-offset-slate-800');
+        }
+      });
+    }
+
+    // Element SDK configuration
+    async function onConfigChange(cfg) {
+      config = { ...defaultConfig, ...cfg };
+      
+      document.getElementById('hospital-name').textContent = config.hospital_name || defaultConfig.hospital_name;
+      document.getElementById('welcome-text').textContent = config.welcome_text || defaultConfig.welcome_text;
+    }
+
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [
+          {
+            get: () => cfg.primary_color || defaultConfig.primary_color,
+            set: (value) => { cfg.primary_color = value; window.elementSdk.setConfig({ primary_color: value }); }
+          },
+          {
+            get: () => cfg.secondary_color || defaultConfig.secondary_color,
+            set: (value) => { cfg.secondary_color = value; window.elementSdk.setConfig({ secondary_color: value }); }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (value) => { cfg.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+          },
+          {
+            get: () => cfg.accent_color || defaultConfig.accent_color,
+            set: (value) => { cfg.accent_color = value; window.elementSdk.setConfig({ accent_color: value }); }
+          },
+          {
+            get: () => cfg.surface_color || defaultConfig.surface_color,
+            set: (value) => { cfg.surface_color = value; window.elementSdk.setConfig({ surface_color: value }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: {
+          get: () => cfg.font_family || 'Poppins',
+          set: (value) => { cfg.font_family = value; window.elementSdk.setConfig({ font_family: value }); }
+        },
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ['hospital_name', cfg.hospital_name || defaultConfig.hospital_name],
+        ['welcome_text', cfg.welcome_text || defaultConfig.welcome_text]
+      ]);
+    }
+
+    // Initialize
+    async function init() {
+      // Initialize Element SDK
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities,
+          mapToEditPanelValues
+        });
+      }
+
+      // Initialize Data SDK
+      if (window.dataSdk) {
+        await window.dataSdk.init(dataHandler);
+      }
+
+      // Event listeners
+      document.getElementById('call-btn').addEventListener('click', callNextQueue);
+      document.getElementById('manual-call-btn').addEventListener('click', callManualQueue);
+      document.getElementById('reset-btn').addEventListener('click', resetQueue);
+      
+      // Allow Enter key in manual input
+      document.getElementById('manual-number').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          callManualQueue();
+        }
+      });
+      
+      document.querySelectorAll('.loket-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectLoket(parseInt(btn.dataset.loket)));
+      });
+
+      // Initialize first loket as selected
+      selectLoket(1);
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c60e9d8834738f0',t:'MTc2OTc3NTUyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
